@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 typedef struct {
@@ -23,14 +24,16 @@ typedef struct {
 } neuron;
 
 typedef struct {
-  bool hidden;
+  bool output;
+  float(*activation)(float);
+  float(*dactivation)(float);
   int num_neurons;
   neuron *neurons;
 } layer;
 
 typedef struct {
   int num_layers;
-  char learning_alg;
+  void (*learning_alg)(layer *, layer *, float *);
   layer *layers;
 } NN;
 
@@ -49,7 +52,9 @@ void init_layer(layer *l);
 
 // set up the NN
 
-NN Neural_Network(int num_layers, int *layers, char learning_alg);
+NN Neural_Network(int num_layers, int *layers, const char* learning_alg);
+
+void backward_prop(layer *lay_out, layer *layer_before, float *tv);
 
 void init_weights(NN *net);
 
