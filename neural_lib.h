@@ -33,7 +33,6 @@ typedef struct {
 
 typedef struct {
   int num_layers;
-  void (*learning_alg)(layer *, layer *, float *);
   layer *layers;
 } NN;
 
@@ -46,28 +45,26 @@ float drelu(float x);
 float cost(float x, float y);
 float dcost(float x, float y);
 
-void forward_prop(layer *x, layer *y);
+void forward_prop(NN *n);
 
 // void cost(float x, float y);
 
-// TODO
 void backward_prop(NN *n, float *tv); 
 
 void init_layer(layer *l);
 
 // set up the NN
 
-NN Neural_zwork(int num_layers, int *layers, const char* learning_alg);
-
-void backward_prop(layer *lay_out, layer *layer_before, float *tv);
+NN Neural_Network(int num_layers, int *layers);
 
 void init_weights(NN *z);
 
-void train(NN *z, int *inputs, int *outputs, float learning_rate,
-           char learning_alg);
+void train_step(NN *z, float *inputs, float *outputs, float learning_rate);
 
 void printLayer(layer *l);
 
 void printNN(NN *z);
 
 void free_NN(NN *z);
+
+void update_weights(NN *net, float alpha); 

@@ -11,14 +11,20 @@ float relu(float x) { return (float)x * (x <= 0); }
 
 float drelu(float x) { return (float)(x > 0); }
 // look at all neurons
-void forward_prop(layer *feeder, layer *eater) {
-  for (int i = 0; i < eater->num_neurons; i++) {
-    float sum = 0;
-    for (int j = 0; j < feeder->num_neurons; j++) {
-      sum += (feeder->neurons[j].weights[i] * feeder->neurons[j].activation);
+void forward_prop(NN *n) {
+  for (int l = 0; l < n->num_layers - 2; l++) {
+
+    layer *layer_before = &n->layers[l - 1];
+    layer *layer_after = &n->layers[l];
+    for (int i = 0; i < layer_after->num_neurons; i++) {
+      float sum = 0;
+      for (int j = 0; j < layer_before->num_neurons; j++) {
+        sum += (layer_before->neurons[j].weights[i] *
+                layer_before->neurons[j].activation);
+      }
+      layer_after->neurons[i].z = sum;
+      layer_after->neurons[i].activation = layer_after->activation(sum);
     }
-    eater->neurons[i].z = sum;
-    eater->neurons[i].activation = eater->activation(sum);
   }
 }
 
@@ -29,8 +35,8 @@ float dcost(float x, float y) { return y - x; }
 // https://www.youtube.com/watch?v=-zI1bldB8to&ab_channel=BevanSmithDataScience
 void backward_prop(NN *n, float *tv) {
   bool output = true;
-  for(int l = n->num_layers-1; l>0; l--){
-    layer *layer_before = &n->layers[l-1];
+  for (int l = n->num_layers - 1; l > 0; l--) {
+    layer *layer_before = &n->layers[l - 1];
     layer *layer_after = &n->layers[l];
     // do the output layer first
     float true_val;
@@ -38,13 +44,14 @@ void backward_prop(NN *n, float *tv) {
       true_val = tv[i];
       // n_after is the output neuron
       neuron *n_after = &layer_after->neurons[i];
-      //dz is different for output
-      if(output){
-        n_after->dz = dcost(n_after->activation, true_val) * layer_after->dactivation(n_after->z);
+      // dz is different for output
+      if (output) {
+        n_after->dz = dcost(n_after->activation, true_val) *
+                      layer_after->dactivation(n_after->z);
         output = false;
-      }
-      else{
-        n_after->dz = (n_after->dactivation) * layer_after->dactivation(n_after->z);
+      } else {
+        n_after->dz =
+            (n_after->dactivation) * layer_after->dactivation(n_after->z);
       }
       // update weights
       for (int j = 0; j < layer_before->num_neurons; j++) {
@@ -57,11 +64,9 @@ void backward_prop(NN *n, float *tv) {
       n_after->dbias = n_after->dz;
     }
   }
-
-  return;
 }
 
-NN Neural_zwork(int num_layers, int *layers, const char *learning_alg) {
+NN Neural_Network(int num_layers, int *layers) {
   NN ret;
   ret.num_layers = num_layers;
   ret.layers = (layer *)calloc(ret.num_layers, sizeof(layer));
@@ -98,20 +103,17 @@ NN Neural_zwork(int num_layers, int *layers, const char *learning_alg) {
       }
     }
   }
-  if (!strcmp(learning_alg, "backprop")) {
-    ret.learning_alg = backward_prop;
-  }
   return ret;
 }
 
-void free_NN(NN *z) {
-  for (int i = 0; i < z->num_layers; i++) {
-    for (int j = 0; j < z->layers[i].num_neurons - 1; j++) {
-      free(z->layers[i].neurons[j].weights);
+void free_NN(NN *net) {
+  for (int i = 0; i < net->num_layers-1; i++) {
+    for (int j = 0; j < net->layers[i].num_neurons; j++) {
+      free(net->layers[i].neurons[j].weights);
     }
-    free(z->layers[i].neurons);
+    free(net->layers[i].neurons);
   }
-  free(z->layers);
+  free(net->layers);
 }
 
 // random right now float (-1,1)
@@ -130,19 +132,29 @@ void init_weights(NN *z) {
   }
 }
 
-// TODO
-void train(NN *z, int *inputs, int *expected_outputs, float learning_rate,
-           char learning_alg) {
-  // assign inputs
-  for (int i = 0; i < z->layers[0].num_neurons; i++) {
-    z->layers[0].neurons[i].activation = inputs[i];
+void update_weights(NN *net, float alpha) {
+  for (int i = 0; i < net->num_layers-1; i++) {
+    for (int j = 0; j < net->layers[i].num_neurons; j++) {
+      for (int k = 0; k < net->layers[i].neurons[j].num_weights; k++) {
+        net->layers[i].neurons[j].weights[k] -= alpha*net->layers[i].neurons[j].dweights[k];
+      }
+      net->layers[i].neurons[j].bias -= alpha*net->layers[i].neurons[j].dbias;
+    }
   }
-  // forward prop
-  for (int i = 0; i < z->num_layers - 1; i++) {
-    forward_prop(&z->layers[i], &z->layers[i + 1]);
+}
+// TODO
+void train_step(NN *net, float *inputs, float *expected_outputs,
+                float learning_rate) {
+  // assign inputs
+  for (int i = 0; i < net->layers[0].num_neurons; i++) {
+    net->layers[0].neurons[i].activation = inputs[i];
   }
 
+  forward_prop(net);
+  backward_prop(net, expected_outputs);
+
   // correct error
+  update_weights(net, learning_rate);
 
   // one iteration done
 }
