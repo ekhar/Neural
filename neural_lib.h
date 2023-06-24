@@ -8,14 +8,14 @@
 
 typedef struct {
   float activation;
-  float net;
+  float z;
   float *weights;
   float bias;
   int num_weights;
 
   // derivatives
   float dactivation;
-  float dnet;
+  float dz;
   float *dweights;
   float dbias;
 
@@ -38,31 +38,36 @@ typedef struct {
 } NN;
 
 float sigmoid(float x);
+float dsigmoid(float x);
 
 float relu(float x);
+float drelu(float x);
+
+float cost(float x, float y);
+float dcost(float x, float y);
 
 void forward_prop(layer *x, layer *y);
 
 // void cost(float x, float y);
 
 // TODO
-void backward_prop(layer *lay_out, layer *layer_before, float *tv);
+void backward_prop(NN *n, float *tv); 
 
 void init_layer(layer *l);
 
 // set up the NN
 
-NN Neural_Network(int num_layers, int *layers, const char* learning_alg);
+NN Neural_zwork(int num_layers, int *layers, const char* learning_alg);
 
 void backward_prop(layer *lay_out, layer *layer_before, float *tv);
 
-void init_weights(NN *net);
+void init_weights(NN *z);
 
-void train(NN *net, int *inputs, int *outputs, float learning_rate,
+void train(NN *z, int *inputs, int *outputs, float learning_rate,
            char learning_alg);
 
 void printLayer(layer *l);
 
-void printNN(NN *net);
+void printNN(NN *z);
 
-void free_NN(NN *net);
+void free_NN(NN *z);
