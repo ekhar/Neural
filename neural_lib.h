@@ -18,9 +18,6 @@ typedef struct {
   float dz;
   float *dweights;
   float dbias;
-
-  // temporary
-  float *new_weights;
 } neuron;
 
 typedef struct {
