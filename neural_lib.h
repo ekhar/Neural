@@ -6,6 +6,11 @@
 #include <string.h>
 #include <time.h>
 
+/*
+-------------------------------
+          STRUCTS
+-------------------------------
+*/
 typedef struct {
   float activation;
   float z;
@@ -33,37 +38,42 @@ typedef struct {
   layer *layers;
 } NN;
 
+/*
+-------------------------------
+            MATH
+-------------------------------
+*/
 float sigmoid(float x);
 float dsigmoid(float x);
-
 float relu(float x);
 float drelu(float x);
-
 float cost(float x, float y);
 float dcost(float x, float y);
 
-void forward_prop(NN *n);
-
-// void cost(float x, float y);
-
-void backward_prop(NN *n, float *tv); 
-
-void init_layer(layer *l);
-
-// set up the NN
-
+/*
+-------------------------------
+    INITIALIZATION/CLEANUP
+-------------------------------
+*/
 NN Neural_Network(int num_layers, int *layers);
-
 void init_weights(NN *z);
-
-void train_step(NN *z, float *inputs, float *outputs, float learning_rate);
-
-void printLayer(layer *l);
-
-void printNN(NN *z);
-
 void free_NN(NN *z);
 
+/*
+-------------------------------
+            LOGIC
+-------------------------------
+*/
+void forward_prop(NN *n);
+void backward_prop(NN *n, float *tv); 
 void update_weights(NN *net, float alpha); 
+void train_step(NN *z, float *inputs, float *outputs, float learning_rate);
 
+/*
+-------------------------------
+            LOGGING
+-------------------------------
+*/
+void printLayer(layer *l);
+void printNN(NN *z);
 void printOut(NN *n);
