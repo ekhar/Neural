@@ -15,7 +15,7 @@ float drelu(float x) { return (float)(x > 0); }
 void forward_prop(NN *n) {
   for (int l = 0; l < n->num_layers - 1; l++) {
     layer *layer_before = &n->layers[l];
-    layer *layer_after = &n->layers[l+1];
+    layer *layer_after = &n->layers[l + 1];
     for (int i = 0; i < layer_after->num_neurons; i++) {
       float sum = 0;
       for (int j = 0; j < layer_before->num_neurons; j++) {
@@ -30,7 +30,7 @@ void forward_prop(NN *n) {
 
 float cost(float x, float y) { return 0.5 * powf(y - x, 2); }
 // must remember to chain rule the inside!
-float dcost(float x, float y) { return y - x; }
+float dcost(float x, float y) { return x - y; }
 // here comes the meat. Here comes the potatos
 // https://www.youtube.com/watch?v=-zI1bldB8to&ab_channel=BevanSmithDataScience
 void backward_prop(NN *n, float *tv) {
@@ -41,11 +41,11 @@ void backward_prop(NN *n, float *tv) {
     // do the output layer first
     float true_val;
     for (int i = 0; i < layer_after->num_neurons; i++) {
-      true_val = tv[i];
       // n_after is the output neuron
       neuron *n_after = &layer_after->neurons[i];
       // dz is different for output
       if (output) {
+        true_val = tv[i];
         n_after->dz = dcost(n_after->activation, true_val) *
                       layer_after->dactivation(n_after->z);
         output = false;
@@ -58,10 +58,15 @@ void backward_prop(NN *n, float *tv) {
         neuron *n_before = &layer_before->neurons[j];
         // dcost/dweight(j) = cost_deriv * dactivation *j.z
         n_before->dweights[i] = n_after->dz * n_before->activation;
-        n_before->dactivation = n_after->dz * n_before->weights[i];
+        // input layers activation is always correct
+        if (i > 1) {
+          n_before->dactivation = n_after->dz * n_before->weights[i];
+        }
       }
       // dcost/dbias(i) = i.dz
       n_after->dbias = n_after->dz;
+      // printf("n_after dbias %.3f\n", n_after->dbias);
+      // printf("On layer %d\n\n", l);
     }
   }
 }
@@ -76,7 +81,7 @@ NN Neural_Network(int num_layers, int *layers) {
     ret.layers[i] = l;
     ret.layers[i].output = (i + 1 == num_layers);
     // set hidden layer activation
-    if (ret.layers[i].output) {
+    if (!ret.layers[i].output) {
       ret.layers[i].activation = relu;
       ret.layers[i].dactivation = drelu;
     } else {
@@ -111,7 +116,8 @@ NN Neural_Network(int num_layers, int *layers) {
 void free_NN(NN *net) {
   for (int i = 0; i < net->num_layers; i++) {
     for (int j = 0; j < net->layers[i].num_neurons; j++) {
-      if(i == net->num_layers -1) break;
+      if (i == net->num_layers - 1)
+        break;
       free(net->layers[i].neurons[j].weights);
       free(net->layers[i].neurons[j].dweights);
     }
@@ -137,13 +143,15 @@ void init_weights(NN *net) {
 }
 
 void update_weights(NN *net, float alpha) {
-  for (int i = 0; i < net->num_layers-1; i++) {
+  for (int i = 0; i < net->num_layers - 1; i++) {
     for (int j = 0; j < net->layers[i].num_neurons; j++) {
       for (int k = 0; k < net->layers[i].neurons[j].num_weights; k++) {
-        if(i == net->num_layers -1) break;
-        net->layers[i].neurons[j].weights[k] -= alpha*net->layers[i].neurons[j].dweights[k];
+        if (i == net->num_layers - 1)
+          break;
+        net->layers[i].neurons[j].weights[k] -=
+            alpha * net->layers[i].neurons[j].dweights[k];
       }
-      net->layers[i].neurons[j].bias -= alpha*net->layers[i].neurons[j].dbias;
+      net->layers[i].neurons[j].bias -= alpha * net->layers[i].neurons[j].dbias;
     }
   }
 }
@@ -193,11 +201,11 @@ void printNN(NN *net) {
   }
 }
 
-void printOut(NN *net){
+void printOut(NN *net) {
   neuron *n;
-  for(int i = 0; i<net->layers[net->num_layers-1].num_neurons; i++){
-    n = &net->layers[net->num_layers-1].neurons[i];
-    printf("%d",n->num_weights);
+  for (int i = 0; i < net->layers[net->num_layers - 1].num_neurons; i++) {
+    n = &net->layers[net->num_layers - 1].neurons[i];
+    printf("%d", n->num_weights);
     printf("Output Neuron %d: %.4f\n", i, n->activation);
   }
 }

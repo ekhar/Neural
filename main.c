@@ -13,10 +13,12 @@ int main() {
   my_net = Neural_Network(num_layers, neurons);
   init_weights(&my_net);
   printNN(&my_net);
-  for(int i =0; i<10; i++){
-    train_step(&my_net, xor_data[3], xor_data_expected[2], 0.01);
+  for(int i =0; i<10000; i++){
+    train_step(&my_net, xor_data[2], xor_data_expected[2], 0.01);
     // printNN(&my_net);
+    if(i%100== 0)
     printOut(&my_net);
+  // printNN(&my_net);
     }
   // printNN(&my_net);
   free_NN(&my_net);
