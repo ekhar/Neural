@@ -65,3 +65,5 @@ void printNN(NN *z);
 void free_NN(NN *z);
 
 void update_weights(NN *net, float alpha); 
+
+void printOut(NN *n);

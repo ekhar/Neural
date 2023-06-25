@@ -1,5 +1,6 @@
 #include "neural_lib.h"
 #include <math.h>
+#include <stdio.h>
 
 float sigmoid(float x) { return (1 / (1 + pow(EULER_NUMBER, -x))); }
 
@@ -50,7 +51,7 @@ void backward_prop(NN *n, float *tv) {
         output = false;
       } else {
         n_after->dz =
-            (n_after->dactivation) * layer_after->dactivation(n_after->z);
+            n_after->dactivation * layer_after->dactivation(n_after->z);
       }
       // update dweights
       for (int j = 0; j < layer_before->num_neurons; j++) {
@@ -160,12 +161,13 @@ void train_step(NN *net, float *inputs, float *expected_outputs,
 
   // one iteration done
 }
+
 void printLayer(layer *l) {
   for (int i = 0; i < l->num_neurons; i++) {
     printf("NEURON %d \n", i);
     printf("bias: %.3f \n", l->neurons[i].bias);
     printf("activation: %.3f \n", l->neurons[i].activation);
-    // printf("z: %.3f \n", l->neurons[i].z);
+    printf("z: %.3f \n", l->neurons[i].z);
     // printf("num_weights: %d \n", l->neurons[i].num_weights);
     printf("weights: [");
     int j;
@@ -181,12 +183,21 @@ void printLayer(layer *l) {
   printf("\n");
 }
 
-void printNN(NN *z) {
+void printNN(NN *net) {
   printf("This is my NN \n \n");
 
-  for (int i = 0; i < z->num_layers; i++) {
+  for (int i = 0; i < net->num_layers; i++) {
     printf("THIS IS LAYER %d \n", i);
-    printLayer(&z->layers[i]);
+    printLayer(&net->layers[i]);
     printf("--------------------------- \n");
+  }
+}
+
+void printOut(NN *net){
+  neuron *n;
+  for(int i = 0; i<net->layers[net->num_layers-1].num_neurons; i++){
+    n = &net->layers[net->num_layers-1].neurons[i];
+    printf("%d",n->num_weights);
+    printf("Output Neuron %d: %.4f\n", i, n->activation);
   }
 }
