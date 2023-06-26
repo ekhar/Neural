@@ -58,6 +58,7 @@ float dcost(float x, float y);
 NN Neural_Network(int num_layers, int *layers);
 void init_weights(NN *z);
 void free_NN(NN *z);
+void set_inputs(NN *net, float *ins);
 
 /*
 -------------------------------
@@ -69,6 +70,7 @@ void backward_prop(NN *n, float *tv);
 void update_weights(NN *net, float alpha); 
 void train_step(NN *z, float *inputs, float *outputs, float learning_rate);
 void predict(NN *net, float *inputs);
+float total_error(NN*net, float *tv);
 /*
 -------------------------------
             LOGGING
@@ -76,6 +78,7 @@ void predict(NN *net, float *inputs);
 */
 void printLayer(layer *l);
 void printNN(NN *z);
+void printdNN(NN *z);
 void printOut(NN *n);
 /*
 -------------------------------
@@ -83,5 +86,5 @@ void printOut(NN *n);
 -------------------------------
 */
 void test_init(NN *net);
-void test_forward(NN *net);
-void test_back(NN *net);
+void test_forward(NN *net, float *inputs);
+void test_back(NN *net, float *tv);
