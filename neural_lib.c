@@ -16,8 +16,8 @@ double leaky_relu(double x) { return (x > 0) ? x : 0.02 * x; }
 
 double dleaky_relu(double x) { return (x > 0) ? 1 : 0.02; }
 
-double cost(double x, double y) { return  pow(x - y, 2); }
-double dcost(double x, double y) { return 2*(x - y); }
+double cost(double x, double y) { return pow(x - y, 2); }
+double dcost(double x, double y) { return 2 * (x - y); }
 
 /*
 -------------------------------
@@ -36,14 +36,14 @@ NN Neural_Network(int num_layers, int *layers) {
     ret.layers[i].output = (i + 1 == num_layers);
     // set hidden layer activation
     if (!ret.layers[i].output) {
-      // ret.layers[i].activation = leaky_relu;
-      // ret.layers[i].dactivation = dleaky_relu;
+      ret.layers[i].activation = leaky_relu;
+      ret.layers[i].dactivation = dleaky_relu;
 
       // ret.layers[i].activation = relu;
       // ret.layers[i].dactivation = drelu;
 
-      ret.layers[i].activation = sigmoid;
-      ret.layers[i].dactivation = dsigmoid;
+      // ret.layers[i].activation = sigmoid;
+      // ret.layers[i].dactivation = dsigmoid;
     } else {
       ret.layers[i].activation = sigmoid;
       ret.layers[i].dactivation = dsigmoid;
@@ -116,36 +116,35 @@ void init_weights(NN *net) {
 
 // Big help from this article
 // https://medium.com/analytics-vidhya/building-neural-network-framework-in-c-using-backpropagation-8ad589a0752d
-void backward_prop(NN *n, double *tv) {
-  for (int l = n->num_layers - 1; l > 0; l--) {
-    layer *layer_before = &n->layers[l - 1];
-    layer *layer_after = &n->layers[l];
-    // do the output layer first
-    double true_val;
-    for (int i = 0; i < layer_after->num_neurons; i++) {
-      // n_after is the output neuron
-      neuron *n_after = &layer_after->neurons[i];
-      // dz is different for output
-      if (l == n->num_layers - 1) {
-        true_val = tv[i];
-        n_after->dz = dcost(n_after->activation, true_val) *
-                      layer_after->dactivation(n_after->z);
-      } else {
-        n_after->dz =
-            n_after->dactivation * layer_after->dactivation(n_after->z);
+void backward_prop(NN *net, double *tv) {
+  int i, j, k;
+
+  // Hidden Layers
+  for (i = net->num_layers - 1; i > 0; i--) {
+    layer *after = &net->layers[i];
+    layer *before = &net->layers[i - 1];
+    for (j = 0; j < after->num_neurons; j++) {
+      //output
+      if(i ==net->num_layers-1){
+        after->neurons[j].dz = dcost(after->neurons[j].activation, tv[j]) * after->dactivation(after->neurons[j].z);
       }
-      // update dweights
-      for (int j = 0; j < layer_before->num_neurons; j++) {
-        neuron *n_before = &layer_before->neurons[j];
-        // dcost/dweight(j) = cost_deriv * dactivation *j.z
-        n_before->dweights[i] = n_after->dz * n_before->activation;
-        // input layers activation is always correct
-        if (l > 1) {
-          // come back += was missing in the tutorial
-          n_before->dactivation += n_after->dz * n_before->weights[i];
+      //hidden
+      else{
+      after->neurons[j].dz = after->neurons[j].dactivation *
+                             after->dactivation(after->neurons[j].z);
+      }
+
+      for (k = 0; k < before->num_neurons; k++) {
+        before->neurons[k].dweights[j] =
+            after->neurons[j].dz * before->neurons[k].activation;
+
+        if (i > 1) {
+          before->neurons[k].dactivation =
+              before->neurons[k].weights[j] * after->neurons[j].dz;
         }
       }
-      n_after->dbias = n_after->dz;
+
+      after->neurons[j].dbias = after->neurons[j].dz;
     }
   }
 }
@@ -176,10 +175,8 @@ void update_weights(NN *net, double alpha) {
               alpha * net->layers[i].neurons[j].dweights[k];
         }
       }
-      if (net->layers[i].activation != sigmoid) {
         net->layers[i].neurons[j].bias -=
             alpha * net->layers[i].neurons[j].dbias;
-      }
     }
   }
 }
@@ -200,9 +197,7 @@ void train_step(NN *net, double *inputs, double *expected_outputs,
 double total_error(NN *net, double *tv) {
   double error = 0;
   for (int i = 0; i < net->layers[net->num_layers - 1].num_neurons; i++) {
-    error =
-        cost(net->layers[net->num_layers - 1].neurons[i].activation, tv[i]);
-        printf("THE COST OF y = %.3f, tv = %.3f is %.3f \n", net->layers[net->num_layers - 1].neurons[i].activation, tv[i], error);
+    error += cost(net->layers[net->num_layers - 1].neurons[i].activation, tv[i]);
   }
 
   return error;

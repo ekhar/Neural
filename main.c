@@ -44,14 +44,16 @@ int main() {
 
   //test_init(&my_net);
   srand(time(NULL));
-  int r = rand() % 4;
+  int r = 0 ;
   //run net
   for(int i =0; i<50000; i++){
+    int r = rand() % 4;
     //printf("---------------TRAINING STEP %d ----------------",i);
-    train_step(&my_net, xor_data[r], xor_data_expected[r], learning_rate);
+    train_step(&my_net, xor_data[r], xor_data_expected[r], learning_rate*3);
     forward_prop(&my_net);
     // test_forward(&my_net, xor_data[i%4]);
     if(i%1000 == 0)
+    // printf("THIS IS R, %d \n", r);
     printf("TOTAL COST %.5f\n", total_error(&my_net, xor_data_expected[r]));
     // if(i%1000=[]= 0)
     // printNN(&my_net);
@@ -59,10 +61,10 @@ int main() {
     }
   for(int i =0; i<4; i++){
     set_inputs(&my_net, xor_data[i]);
-    //forward_prop(&my_net);
+    forward_prop(&my_net);
     //forward_prop(&my_net);
     printf("THE TRUE VALUE %f \n", xor_data_expected[i][0]);
-    printf("TOTAL COST %.5f\n", total_error(&my_net, xor_data_expected[i]));
+    //printf("TOTAL COST %.5f\n", total_error(&my_net, xor_data_expected[i]));
     printOut(&my_net);
     }
     
