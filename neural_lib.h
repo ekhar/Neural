@@ -68,7 +68,7 @@ void forward_prop(NN *n);
 void backward_prop(NN *n, float *tv); 
 void update_weights(NN *net, float alpha); 
 void train_step(NN *z, float *inputs, float *outputs, float learning_rate);
-
+void predict(NN *net, float *inputs);
 /*
 -------------------------------
             LOGGING
@@ -77,3 +77,11 @@ void train_step(NN *z, float *inputs, float *outputs, float learning_rate);
 void printLayer(layer *l);
 void printNN(NN *z);
 void printOut(NN *n);
+/*
+-------------------------------
+            TESTS
+-------------------------------
+*/
+void test_init(NN *net);
+void test_forward(NN *net);
+void test_back(NN *net);
