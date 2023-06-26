@@ -1,4 +1,5 @@
 #include "neural_lib.h"
+#include <math.h>
 
 /*
 -------------------------------
@@ -13,11 +14,15 @@ double relu(double x) { return (double)x * (x > 0); }
 double drelu(double x) { return (x > 0) * 1.0f; }
 
 double leaky_relu(double x) { return (x > 0) ? x : 0.02 * x; }
-
 double dleaky_relu(double x) { return (x > 0) ? 1 : 0.02; }
+
+double dtanh(double x){
+  return 1-pow(tanh(x),2);
+}
 
 double cost(double x, double y) { return pow(x - y, 2); }
 double dcost(double x, double y) { return 2 * (x - y); }
+
 
 /*
 -------------------------------
@@ -42,8 +47,11 @@ NN Neural_Network(int num_layers, int *layers) {
       // ret.layers[i].activation = relu;
       // ret.layers[i].dactivation = drelu;
 
-      ret.layers[i].activation = sigmoid;
-      ret.layers[i].dactivation = dsigmoid;
+      // ret.layers[i].activation = sigmoid;
+      // ret.layers[i].dactivation = dsigmoid;
+
+      ret.layers[i].activation = tanh;
+      ret.layers[i].dactivation = dtanh;
     } else {
       ret.layers[i].activation = sigmoid;
       ret.layers[i].dactivation = dsigmoid;
