@@ -36,14 +36,14 @@ NN Neural_Network(int num_layers, int *layers) {
     ret.layers[i].output = (i + 1 == num_layers);
     // set hidden layer activation
     if (!ret.layers[i].output) {
-      ret.layers[i].activation = leaky_relu;
-      ret.layers[i].dactivation = dleaky_relu;
+      // ret.layers[i].activation = leaky_relu;
+      // ret.layers[i].dactivation = dleaky_relu;
 
       // ret.layers[i].activation = relu;
       // ret.layers[i].dactivation = drelu;
 
-      // ret.layers[i].activation = sigmoid;
-      // ret.layers[i].dactivation = dsigmoid;
+      ret.layers[i].activation = sigmoid;
+      ret.layers[i].dactivation = dsigmoid;
     } else {
       ret.layers[i].activation = sigmoid;
       ret.layers[i].dactivation = dsigmoid;
@@ -116,23 +116,33 @@ void init_weights(NN *net) {
 
 // Big help from this article
 // https://medium.com/analytics-vidhya/building-neural-network-framework-in-c-using-backpropagation-8ad589a0752d
+
 void backward_prop(NN *net, double *tv) {
   int i, j, k;
 
+  // Output Layer
+  for (j = 0; j < net->layers[net->num_layers - 1].num_neurons; j++) {
+    layer *before = &net->layers[net->num_layers - 2];
+    layer *output = &net->layers[net->num_layers - 1];
+    output->neurons[j].dz = dcost(output->neurons[j].activation, tv[j]) * output->dactivation(output->neurons[j].z);
+
+    for (k = 0; k < before->num_neurons; k++) {
+      before->neurons[k].dweights[j] =
+          (output->neurons[j].dz * before->neurons[k].activation);
+      before->neurons[k].dactivation =
+          before->neurons[k].weights[j] * output->neurons[j].dz;
+    }
+
+    output->neurons[j].dbias = output->neurons[j].dz;
+  }
+
   // Hidden Layers
-  for (i = net->num_layers - 1; i > 0; i--) {
+  for (i = net->num_layers - 2; i > 0; i--) {
     layer *after = &net->layers[i];
     layer *before = &net->layers[i - 1];
     for (j = 0; j < after->num_neurons; j++) {
-      //output
-      if(i ==net->num_layers-1){
-        after->neurons[j].dz = dcost(after->neurons[j].activation, tv[j]) * after->dactivation(after->neurons[j].z);
-      }
-      //hidden
-      else{
       after->neurons[j].dz = after->neurons[j].dactivation *
                              after->dactivation(after->neurons[j].z);
-      }
 
       for (k = 0; k < before->num_neurons; k++) {
         before->neurons[k].dweights[j] =
