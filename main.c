@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#define NUM_LAYERS 3
+#define NUM_LAYERS 4
 
 void basic_test(){
   
@@ -33,7 +33,7 @@ int main() {
 
   //initialization
   NN my_net;
-  int neurons[NUM_LAYERS] = {2, 5, 1};
+  int neurons[NUM_LAYERS] = {2, 4, 4, 1};
   float learning_rate = 0.01;
   my_net = Neural_Network(NUM_LAYERS, neurons);
   init_weights(&my_net);
@@ -58,13 +58,8 @@ int main() {
     // printdNN(&my_net);
     }
 
+  printNN(&my_net);
 
-  for(int i=0; i<4; i++){
-    // printf("PREDICTION for %f %f \n", xor_data[i][0],xor_data[i][1]);
-    // predict(&my_net, xor_data[i]);
-    // printOut(&my_net);
-    // printf("TV was %f \n", xor_data_expected[i][0]);
-  }
 
   //Cleanup
   free_NN(&my_net);
