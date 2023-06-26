@@ -12,23 +12,23 @@
 -------------------------------
 */
 typedef struct {
-  float activation;
-  float z;
-  float *weights;
-  float bias;
+  double activation;
+  double z;
+  double *weights;
+  double bias;
   int num_weights;
 
   // derivatives
-  float dactivation;
-  float dz;
-  float *dweights;
-  float dbias;
+  double dactivation;
+  double dz;
+  double *dweights;
+  double dbias;
 } neuron;
 
 typedef struct {
   bool output;
-  float(*activation)(float);
-  float(*dactivation)(float);
+  double(*activation)(double);
+  double(*dactivation)(double);
   int num_neurons;
   neuron *neurons;
 } layer;
@@ -43,12 +43,12 @@ typedef struct {
             MATH
 -------------------------------
 */
-float sigmoid(float x);
-float dsigmoid(float x);
-float relu(float x);
-float drelu(float x);
-float cost(float x, float y);
-float dcost(float x, float y);
+double sigmoid(double x);
+double dsigmoid(double x);
+double relu(double x);
+double drelu(double x);
+double cost(double x, double y);
+double dcost(double x, double y);
 
 /*
 -------------------------------
@@ -58,7 +58,7 @@ float dcost(float x, float y);
 NN Neural_Network(int num_layers, int *layers);
 void init_weights(NN *z);
 void free_NN(NN *z);
-void set_inputs(NN *net, float *ins);
+void set_inputs(NN *net, double *ins);
 
 /*
 -------------------------------
@@ -66,11 +66,11 @@ void set_inputs(NN *net, float *ins);
 -------------------------------
 */
 void forward_prop(NN *n);
-void backward_prop(NN *n, float *tv); 
-void update_weights(NN *net, float alpha); 
-void train_step(NN *z, float *inputs, float *outputs, float learning_rate);
-void predict(NN *net, float *inputs);
-float total_error(NN*net, float *tv);
+void backward_prop(NN *n, double *tv); 
+void update_weights(NN *net, double alpha); 
+void train_step(NN *z, double *inputs, double *outputs, double learning_rate);
+void predict(NN *net, double *inputs);
+double total_error(NN*net, double *tv);
 /*
 -------------------------------
             LOGGING
@@ -86,5 +86,5 @@ void printOut(NN *n);
 -------------------------------
 */
 void test_init(NN *net);
-void test_forward(NN *net, float *inputs);
-void test_back(NN *net, float *tv);
+void test_forward(NN *net, double *inputs);
+void test_back(NN *net, double *tv);
