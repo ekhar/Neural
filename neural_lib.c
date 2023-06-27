@@ -6,18 +6,19 @@
 -------------------------------
 */
 
-double sigmoid(double x) { return 1 / (1 + exp(-x)); }
-double dsigmoid(double x) { return sigmoid(x) * (1 - sigmoid(x)); }
+float sigmoid(float x) { return 1 / (1 + exp(-x)); }
+float dsigmoid(float x) { return sigmoid(x) * (1 - sigmoid(x)); }
 
-double relu(double x) { return (double)x * (x > 0); }
-double drelu(double x) { return (x > 0) * 1.0f; }
+float relu(float x) { return (float)x * (x > 0); }
+float drelu(float x) { return (x > 0) * 1.0f; }
 
-double leaky_relu(double x) { return (x > 0) ? x : 0.02 * x; }
+float leaky_relu(float x) { return (x > 0) ? x : 0.02 * x; }
+float dleaky_relu(float x) { return (x > 0) ? 1 : 0.02; }
 
-double dleaky_relu(double x) { return (x > 0) ? 1 : 0.02; }
+float dtanh(float x) { return 1 - pow(tanhf(x), 2); }
 
-double cost(double x, double y) { return pow(x - y, 2); }
-double dcost(double x, double y) { return 2 * (x - y); }
+float cost(float x, float y) { return pow(x - y, 2); }
+float dcost(float x, float y) { return 2 * (x - y); }
 
 /*
 -------------------------------
@@ -25,7 +26,7 @@ double dcost(double x, double y) { return 2 * (x - y); }
 -------------------------------
 */
 
-NN Neural_Network(int num_layers, int *layers) {
+NN Neural_Network(int num_layers, int *layers, char hidden[], char output[]) {
   NN ret;
   ret.num_layers = num_layers;
   ret.layers = (layer *)calloc(ret.num_layers, sizeof(layer));
@@ -36,23 +37,66 @@ NN Neural_Network(int num_layers, int *layers) {
     ret.layers[i].output = (i + 1 == num_layers);
     // set hidden layer activation
     if (!ret.layers[i].output) {
-      // ret.layers[i].activation = leaky_relu;
-      // ret.layers[i].dactivation = dleaky_relu;
+      if (strcmp(hidden, "leakyRelu") == 0) {
+        ret.layers[i].activation = leaky_relu;
+        ret.layers[i].dactivation = dleaky_relu;
+      }
 
-      // ret.layers[i].activation = relu;
-      // ret.layers[i].dactivation = drelu;
+      else if (strcmp(hidden, "relu") == 0) {
+        ret.layers[i].activation = relu;
+        ret.layers[i].dactivation = drelu;
+      }
 
+      else if (strcmp(hidden, "sigmoid") == 0) {
+        ret.layers[i].activation = sigmoid;
+        ret.layers[i].dactivation = dsigmoid;
+      }
+
+      else if (strcmp(hidden, "tanh") == 0) {
+        ret.layers[i].activation = tanhf;
+        ret.layers[i].dactivation = dtanh;
+      } else {
+        fprintf(stderr,
+                "hidden: %s Please specify hidden as either leakyRelu, "
+                "relu, sigmoid, or tanh",
+                hidden);
+      }
+
+    }
+    // output layer
+    else {
       ret.layers[i].activation = sigmoid;
       ret.layers[i].dactivation = dsigmoid;
-    } else {
-      ret.layers[i].activation = sigmoid;
-      ret.layers[i].dactivation = dsigmoid;
+      if (strcmp(hidden, "leakyRelu") == 0) {
+        ret.layers[i].activation = leaky_relu;
+        ret.layers[i].dactivation = dleaky_relu;
+      }
+
+      else if (strcmp(hidden, "relu") == 0) {
+        ret.layers[i].activation = relu;
+        ret.layers[i].dactivation = drelu;
+      }
+
+      else if (strcmp(hidden, "sigmoid") == 0) {
+        ret.layers[i].activation = sigmoid;
+        ret.layers[i].dactivation = dsigmoid;
+      }
+
+      else if (strcmp(hidden, "tanh") == 0) {
+        ret.layers[i].activation = tanhf;
+        ret.layers[i].dactivation = dtanh;
+      } else {
+        fprintf(stderr,
+                "output: %s Please specify hidden as either leakyRelu, "
+                "relu, sigmoid, or tanh",
+                output);
+      }
     }
 
     ret.layers[i].num_neurons = layers[i];
-    // populate neuron by neuron
     ret.layers[i].neurons =
         (neuron *)calloc(ret.layers[i].num_neurons, sizeof(neuron));
+
     for (int j = 0; j < layers[i]; j++) {
       neuron n = {0};
       ret.layers[i].neurons[j] = n;
@@ -65,10 +109,10 @@ NN Neural_Network(int num_layers, int *layers) {
             (i < num_layers - 1) ? layers[i + 1] : 0;
         // only calloc if there are (d)weights to be put on heap
         if (ret.layers[i].neurons[j].num_weights) {
-          ret.layers[i].neurons[j].weights = (double *)calloc(
-              ret.layers[i].neurons[j].num_weights, sizeof(double));
-          ret.layers[i].neurons[j].dweights = (double *)calloc(
-              ret.layers[i].neurons[j].num_weights, sizeof(double));
+          ret.layers[i].neurons[j].weights = (float *)calloc(
+              ret.layers[i].neurons[j].num_weights, sizeof(float));
+          ret.layers[i].neurons[j].dweights = (float *)calloc(
+              ret.layers[i].neurons[j].num_weights, sizeof(float));
         }
       }
     }
@@ -89,20 +133,21 @@ void free_NN(NN *net) {
   free(net->layers);
 }
 
-// random double (-1,1)
+// random float (-1,1)
 void init_weights(NN *net) {
   // Seed the random number generator
   net->layers[0].neurons[0].weights[0] = 1;
   srand(time(0));
-  double randdouble;
+  float randfloat;
   for (int i = 0; i < net->num_layers - 1; i++) {
     for (int j = 0; j < net->layers[i].num_neurons; j++) {
       for (int k = 0; k < net->layers[i].neurons[j].num_weights; k++) {
-        randdouble = ((double)rand() / (double)RAND_MAX) * 2 - 1;
-        net->layers[i].neurons[j].weights[k] = randdouble;
+        randfloat = ((float)rand() / (float)RAND_MAX) * 2 - 1;
+        net->layers[i].neurons[j].weights[k] = randfloat;
+
         // net->layers[i].neurons[j].weights[k] =
         //     sqrt(2.0 / net->layers[i].neurons[j].num_weights) *
-        //     ((double)rand() / (double)RAND_MAX - 0.5); // He initialization
+        //     ((float)rand() / (float)RAND_MAX - 0.5); // He initialization
       }
     }
   }
@@ -117,14 +162,15 @@ void init_weights(NN *net) {
 // Big help from this article
 // https://medium.com/analytics-vidhya/building-neural-network-framework-in-c-using-backpropagation-8ad589a0752d
 
-void backward_prop(NN *net, double *tv) {
+void backward_prop(NN *net, float *tv) {
   int i, j, k;
 
   // Output Layer
   for (j = 0; j < net->layers[net->num_layers - 1].num_neurons; j++) {
     layer *before = &net->layers[net->num_layers - 2];
     layer *output = &net->layers[net->num_layers - 1];
-    output->neurons[j].dz = dcost(output->neurons[j].activation, tv[j]) * output->dactivation(output->neurons[j].z);
+    output->neurons[j].dz = dcost(output->neurons[j].activation, tv[j]) *
+                            output->dactivation(output->neurons[j].z);
 
     for (k = 0; k < before->num_neurons; k++) {
       before->neurons[k].dweights[j] =
@@ -164,7 +210,7 @@ void forward_prop(NN *n) {
     layer *layer_before = &n->layers[l];
     layer *layer_after = &n->layers[l + 1];
     for (int i = 0; i < layer_after->num_neurons; i++) {
-      double sum = 0;
+      float sum = 0;
       for (int j = 0; j < layer_before->num_neurons; j++) {
         sum += (layer_before->neurons[j].weights[i] *
                 layer_before->neurons[j].activation);
@@ -176,7 +222,7 @@ void forward_prop(NN *n) {
   }
 }
 
-void update_weights(NN *net, double alpha) {
+void update_weights(NN *net, float alpha) {
   for (int i = 0; i < net->num_layers - 1; i++) {
     for (int j = 0; j < net->layers[i].num_neurons; j++) {
       for (int k = 0; k < net->layers[i].neurons[j].num_weights; k++) {
@@ -185,41 +231,38 @@ void update_weights(NN *net, double alpha) {
               alpha * net->layers[i].neurons[j].dweights[k];
         }
       }
-        net->layers[i].neurons[j].bias -=
-            alpha * net->layers[i].neurons[j].dbias;
+      net->layers[i].neurons[j].bias -= alpha * net->layers[i].neurons[j].dbias;
     }
   }
 }
 
-void train_step(NN *net, double *inputs, double *expected_outputs,
-                double learning_rate) {
-  // assign inputs
+void train_step(NN *net, float *inputs, float *expected_outputs,
+                float learning_rate) {
   set_inputs(net, inputs);
-
   forward_prop(net);
   backward_prop(net, expected_outputs);
-  // printf("Error %.5f\n",err);
   update_weights(net, learning_rate);
-
-  // one iteration done
 }
 
-double total_error(NN *net, double *tv) {
-  double error = 0;
+float total_error(NN *net, float *tv) {
+  float error = 0;
   for (int i = 0; i < net->layers[net->num_layers - 1].num_neurons; i++) {
-    error += cost(net->layers[net->num_layers - 1].neurons[i].activation, tv[i]);
+    error +=
+        cost(net->layers[net->num_layers - 1].neurons[i].activation, tv[i]);
   }
 
   return error;
 }
 
-void predict(NN *net, double *inputs) {
-  // assign inputs
+void predict(NN *net, float *inputs) {
   set_inputs(net, inputs);
-
   forward_prop(net);
 }
-
+void set_inputs(NN *net, float *ins) {
+  for (int i = 0; i < net->layers[0].num_neurons; i++) {
+    net->layers[0].neurons[i].activation = ins[i];
+  }
+}
 /*
 -------------------------------
             LOGGING
@@ -229,11 +272,11 @@ void predict(NN *net, double *inputs) {
 void printLayer(layer *l) {
   for (int i = 0; i < l->num_neurons; i++) {
     printf("NEURON %d \n", i);
-    // printf("bias: %.6f \n", l->neurons[i].bias);
+    printf("bias: %.6f \n", l->neurons[i].bias);
     printf("activation: %.6f \n", l->neurons[i].activation);
-    // printf("z: %.6f \n", l->neurons[i].z);
-    // printf("num_weights: %d \n", l->neurons[i].num_weights);
-    // printf("OUTPUT: %d \n", l->output);
+    printf("z: %.6f \n", l->neurons[i].z);
+    printf("num_weights: %d \n", l->neurons[i].num_weights);
+    printf("OUTPUT: %d \n", l->output);
     printf("weights: [");
     int j;
     for (j = 0; j < l->neurons[i].num_weights - 1; j++) {
@@ -290,54 +333,3 @@ void printdNN(NN *net) {
 }
 
 void printOut(NN *net) { printLayer(&net->layers[net->num_layers - 1]); }
-
-void test_init(NN *net) {
-
-  // int layers [3] = {2,2,2};
-  // net = Neural_Network(3,layers);
-  double weights[4][2] = {{.15, .2}, {.25, .3}, {.4, .45}, {.5, .55}};
-
-  net->layers[0].neurons[0].weights[0] = weights[0][0];
-  net->layers[0].neurons[0].weights[1] = weights[1][0];
-  net->layers[0].neurons[1].weights[0] = weights[0][1];
-  net->layers[0].neurons[1].weights[1] = weights[1][1];
-
-  net->layers[1].neurons[0].bias = 0.0;
-  net->layers[1].neurons[1].bias = 0.0;
-
-  net->layers[1].neurons[0].weights[0] = weights[2][0];
-  net->layers[1].neurons[0].weights[1] = weights[3][0];
-  net->layers[1].neurons[1].weights[0] = weights[2][1];
-  net->layers[1].neurons[1].weights[1] = weights[3][1];
-  net->layers[1].neurons[0].bias = 0.35;
-  net->layers[1].neurons[1].bias = 0.35;
-
-  net->layers[2].neurons[0].bias = 0.6;
-  net->layers[2].neurons[1].bias = 0.6;
-
-  // printNN(net);
-  // printf("INITIALIZED\n");
-}
-
-void test_forward(NN *net, double *inputs) {
-  // printdNN(net);
-  set_inputs(net, inputs);
-  forward_prop(net);
-  // printNN(net);
-  // printf("FINISHED FORWARD");
-}
-
-void test_back(NN *net, double *tv) {
-  backward_prop(net, tv);
-  update_weights(net, 0.01);
-  // printNN(net);
-  // printdNN(net);
-  // printf("FINISHED BACK");
-  return;
-}
-
-void set_inputs(NN *net, double *ins) {
-  for (int i = 0; i < net->layers[0].num_neurons; i++) {
-    net->layers[0].neurons[i].activation = ins[i];
-  }
-}

@@ -1,4 +1,6 @@
-#define EULER_NUMBER 2.71828182846
+#ifndef NN_H
+#define NN_H
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
@@ -12,23 +14,23 @@
 -------------------------------
 */
 typedef struct {
-  double activation;
-  double z;
-  double *weights;
-  double bias;
+  float activation;
+  float z;
+  float *weights;
+  float bias;
   int num_weights;
 
   // derivatives
-  double dactivation;
-  double dz;
-  double *dweights;
-  double dbias;
+  float dactivation;
+  float dz;
+  float *dweights;
+  float dbias;
 } neuron;
 
 typedef struct {
   bool output;
-  double(*activation)(double);
-  double(*dactivation)(double);
+  float(*activation)(float);
+  float(*dactivation)(float);
   int num_neurons;
   neuron *neurons;
 } layer;
@@ -43,48 +45,42 @@ typedef struct {
             MATH
 -------------------------------
 */
-double sigmoid(double x);
-double dsigmoid(double x);
-double relu(double x);
-double drelu(double x);
-double cost(double x, double y);
-double dcost(double x, double y);
+float sigmoid(float x);
+float dsigmoid(float x);
+float relu(float x);
+float drelu(float x);
+float cost(float x, float y);
+float dcost(float x, float y);
 
 /*
 -------------------------------
     INITIALIZATION/CLEANUP
 -------------------------------
 */
-NN Neural_Network(int num_layers, int *layers);
-void init_weights(NN *z);
-void free_NN(NN *z);
-void set_inputs(NN *net, double *ins);
+NN Neural_Network(int num_layers, int *layers, char hidden[], char output[]);
+void init_weights(NN *net);
+void free_NN(NN *net);
+void set_inputs(NN *net, float *ins);
 
 /*
 -------------------------------
             LOGIC
 -------------------------------
 */
-void forward_prop(NN *n);
-void backward_prop(NN *n, double *tv); 
-void update_weights(NN *net, double alpha); 
-void train_step(NN *z, double *inputs, double *outputs, double learning_rate);
-void predict(NN *net, double *inputs);
-double total_error(NN*net, double *tv);
+void forward_prop(NN *net);
+void backward_prop(NN *net, float *tv); 
+void update_weights(NN *net, float alpha); 
+void train_step(NN *net, float *inputs, float *outputs, float learning_rate);
+void predict(NN *net, float *inputs);
+float total_error(NN*net, float *tv);
 /*
 -------------------------------
             LOGGING
 -------------------------------
 */
 void printLayer(layer *l);
-void printNN(NN *z);
-void printdNN(NN *z);
-void printOut(NN *n);
-/*
--------------------------------
-            TESTS
--------------------------------
-*/
-void test_init(NN *net);
-void test_forward(NN *net, double *inputs);
-void test_back(NN *net, double *tv);
+void printNN(NN *net);
+void printdNN(NN *net);
+void printOut(NN *net);
+
+#endif
