@@ -1,13 +1,12 @@
+#ifndef TESTS_H
+#define TESTS_H
+
 #include "neural_lib.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#define NUM_LAYERS 4
 
 void test_init(NN *net);
-void test_forward(NN *net, double *inputs);
-void test_back(NN *net, double *tv);
-void basic_test();
-void xor_test();
+void test_forward(NN *net, float *inputs);
+void test_back(NN *net, float *tv);
+void test_basic();
+void test_xor();
 
+#endif
