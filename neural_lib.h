@@ -80,11 +80,3 @@ void printLayer(layer *l);
 void printNN(NN *z);
 void printdNN(NN *z);
 void printOut(NN *n);
-/*
--------------------------------
-            TESTS
--------------------------------
-*/
-void test_init(NN *net);
-void test_forward(NN *net, double *inputs);
-void test_back(NN *net, double *tv);
