@@ -62,7 +62,7 @@ void test_xor() {
   char hidden[] = "relu";  
   char output[] = "sigmoid";  
   int layers[] = {2, 4, 4, 1};
-  float learning_rate = 0.01;
+  float learning_rate = 0.00;
   my_net = Neural_Network(4, layers, hidden, output);
   init_weights(&my_net);
 
