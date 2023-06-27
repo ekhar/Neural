@@ -10,5 +10,4 @@ void test_forward(NN *net, double *inputs);
 void test_back(NN *net, double *tv);
 void basic_test();
 void xor_test();
-void mnist_test();
 
