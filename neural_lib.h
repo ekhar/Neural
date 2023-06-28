@@ -29,6 +29,7 @@ typedef struct {
 
 typedef struct {
   bool output;
+  char * activation_name;
   float(*activation)(float);
   float(*dactivation)(float);
   int num_neurons;
@@ -61,7 +62,7 @@ NN Neural_Network(int num_layers, int *layers, char hidden[], char output[]);
 void init_weights(NN *net);
 void free_NN(NN *net);
 void set_inputs(NN *net, float *ins);
-
+void set_layer_activation(layer *l, char activation_name[]);
 /*
 -------------------------------
             LOGIC
@@ -82,5 +83,14 @@ void printLayer(layer *l);
 void printNN(NN *net);
 void printdNN(NN *net);
 void printOut(NN *net);
+
+
+/*
+-------------------------------
+            Save State
+-------------------------------
+*/
+void save_nn(NN *net, const char *filename);
+void read_nn(NN *net, const char *filename);
 
 #endif

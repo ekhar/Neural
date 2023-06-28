@@ -1,6 +1,9 @@
 #include "neural_lib.h"
-
+#include "mnist.h"
+#include "tests.h"
 int main(){
-return 0;
+  test_readwrite();
+  test_xor();
+  //test_basic();
   
 }
