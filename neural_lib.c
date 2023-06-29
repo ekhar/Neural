@@ -365,6 +365,7 @@ void read_nn(NN *network, const char *filename) {
         for (int j = 0; j < network->layers[i].num_neurons; j++) {
             fread(&network->layers[i].neurons[j].num_weights, sizeof(network->layers[i].neurons[j].num_weights), 1, file);
             network->layers[i].neurons[j].weights = malloc(sizeof(float) * network->layers[i].neurons[j].num_weights);
+            network->layers[i].neurons[j].dweights = malloc(sizeof(float) * network->layers[i].neurons[j].num_weights);
             fread(network->layers[i].neurons[j].weights, sizeof(float), network->layers[i].neurons[j].num_weights, file);
             fread(&network->layers[i].neurons[j].bias, sizeof(network->layers[i].neurons[j].bias), 1, file);
         }

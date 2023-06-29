@@ -58,3 +58,4 @@ dkms.conf
 
 #training & testing data
 mnist/
+*.txt
