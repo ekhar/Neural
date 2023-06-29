@@ -18,11 +18,15 @@ void read_mnist(char *images_file_path, char *labels_file_path,
   // Open the files
   FILE *images_file = fopen(images_file_path, "rb");
   FILE *labels_file = fopen(labels_file_path, "rb");
-  if (images_file == NULL || labels_file == NULL) {
-    printf("Error opening file.\n");
+  if (images_file == NULL) {
+    printf("Error opening image file.\n");
     return;
   }
 
+  if (labels_file == NULL) {
+    printf("Error opening labels file.\n");
+    return;
+  }
   // Skip the headers
   fseek(images_file, 16, SEEK_SET);
   fseek(labels_file, 8, SEEK_SET);
@@ -50,8 +54,8 @@ void read_mnist(char *images_file_path, char *labels_file_path,
 
 void train_mnist(char *images_file_path, char *labels_file_path, NN *net) {
   // Create buffers for the images and labels
-  float images[60000][784];
-  int labels[60000];
+  float (*images)[784] = malloc(60000 * sizeof(*images));
+  int *labels = malloc(60000 * sizeof(int));
   float output[10];
 
   // Read the training data
@@ -61,13 +65,18 @@ void train_mnist(char *images_file_path, char *labels_file_path, NN *net) {
   for (int i = 0; i < 60000; i++) {
     one_hot_encode(labels[i], output);
     train_step(net, images[i], output, 0.03);
+      if(i%10 ==0){
+        printf("%d trained\n", i);
+      }
   }
+  free(images);
+  free(labels);
 }
 
 void test_mnist(char *images_file_path, char *labels_file_path, NN *net) {
   // Create buffers for the images and labels
-  float images[10000][784];
-  int labels[10000];
+  float (*images)[784] = malloc(10000 * sizeof(*images));
+  int *labels = malloc(10000 * sizeof(int));
 
   // Read the testing data
   read_mnist(images_file_path, labels_file_path, images, labels);
@@ -87,6 +96,9 @@ void test_mnist(char *images_file_path, char *labels_file_path, NN *net) {
   // Print the accuracy
   float accuracy = (float)correct_predictions / 10000.0;
   printf("Test accuracy: %.2f%%\n", accuracy * 100);
+
+  free(images);
+  free(labels);
 }
 
 int main() {
@@ -97,12 +109,12 @@ int main() {
   // read_nn(&mnist_net, "net_mnist.net");
   int cap = 1;
   for (int epoch = 0; epoch < cap; ++epoch) {
-    train_mnist("./mnist/train-images-idx3-ubyte",
-               "./mnist/train-labels-idx1-upbyte", &mnist_net);
+    train_mnist("mnist/train-images-idx3-ubyte",
+               "mnist/train-labels-idx1-ubyte", &mnist_net);
     save_nn(&mnist_net, "net_mnist.net");
     printf("epoch %d\n", epoch);
   }
-  test_mnist("./mnist/t10k-images-idx3-ubyte", "./mnist/t10k-labels-idx3-upbyte",
+  test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx3-upbyte",
              &mnist_net);
   return 0;
 }
