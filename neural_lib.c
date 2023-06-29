@@ -124,12 +124,12 @@ void init_weights(NN *net) {
   for (int i = 0; i < net->num_layers - 1; i++) {
     for (int j = 0; j < net->layers[i].num_neurons; j++) {
       for (int k = 0; k < net->layers[i].neurons[j].num_weights; k++) {
-        randfloat = ((float)rand() / (float)RAND_MAX) * 2 - 1;
-        net->layers[i].neurons[j].weights[k] = randfloat;
+        //randfloat = ((float)rand() / (float)RAND_MAX) * 2 - 1;
+        //net->layers[i].neurons[j].weights[k] = randfloat;
 
-        // net->layers[i].neurons[j].weights[k] =
-        //     sqrt(2.0 / net->layers[i].neurons[j].num_weights) *
-        //     ((float)rand() / (float)RAND_MAX - 0.5); // He initialization
+        net->layers[i].neurons[j].weights[k] =
+            sqrt(2.0 / net->layers[i].neurons[j].num_weights) *
+            ((float)rand() / (float)RAND_MAX - 0.5); // He initialization
       }
     }
   }

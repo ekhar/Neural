@@ -62,7 +62,7 @@ void train_mnist(char *images_file_path, char *labels_file_path, NN *net) {
   // Loop over the data and train the network
   for (int i = 0; i < 60000; i++) {
     one_hot_encode(labels[i], output);
-    train_step(net, images[i], output, 0.03);
+    train_step(net, images[i], output, 0.01);
       if(i%1000 ==0){
         printf("%d trained\n", i);
       }
@@ -98,14 +98,14 @@ void test_mnist(char *images_file_path, char *labels_file_path, NN *net) {
   free(images);
   free(labels);
 }
-
+#define LAYERS 4
 int main() {
-  int layers[] = {28 * 28, 128, 10};
-  // NN mnist_net = Neural_Network(3, layers, "leakyRelu", "tanh");
-  // init_weights(&mnist_net);
-  NN mnist_net;
-  read_nn(&mnist_net, "net_mnist.net");
-  int cap = 0;
+  int layers[LAYERS] = {28 * 28, 180, 180, 10};
+  NN mnist_net = Neural_Network(LAYERS, layers, "leakyRelu", "sigmoid");
+  init_weights(&mnist_net);
+  // NN mnist_net;
+  // read_nn(&mnist_net, "net_mnist.net");
+  int cap = 500;
   for (int epoch = 0; epoch < cap; ++epoch) {
     train_mnist("mnist/train-images-idx3-ubyte",
                "mnist/train-labels-idx1-ubyte", &mnist_net);
