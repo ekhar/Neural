@@ -74,6 +74,8 @@ void update_weights(NN *net, float alpha);
 void train_step(NN *net, float *inputs, float *outputs, float learning_rate);
 void predict(NN *net, float *inputs);
 float total_error(NN*net, float *tv);
+int max_output(NN* net);
+
 /*
 -------------------------------
             LOGGING

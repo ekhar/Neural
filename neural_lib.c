@@ -236,6 +236,19 @@ float total_error(NN *net, float *tv) {
   return error;
 }
 
+int max_output(NN* net) {
+    layer *l = &net->layers[net->num_layers-1];
+    int idx_max = 0;
+    float val_max = l->neurons[0].activation;
+    for(int i = 1; i < l->num_neurons; i++) {
+        if(l->neurons[i].activation > val_max) {
+            val_max = l->neurons[i].activation;
+            idx_max = i;
+        }
+    }
+    return idx_max;
+}
+
 void predict(NN *net, float *inputs) {
   set_inputs(net, inputs);
   forward_prop(net);

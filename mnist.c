@@ -1,102 +1,109 @@
 #include "mnist.h"
+#include "draw.h"
 #include "neural_lib.h"
 
-int read_arrays(FILE **file, float label[], float data[]) {
-  if (*file == NULL) {
-    printf("Cannot open file\n");
-    return -1;
-  }
+void one_hot_encode(int input, float output[10]) {
+  // Ensure the array is cleared (all zeros)
+  memset(output, 0, 10 * sizeof(float));
 
-  int total_data;
-
-  // read header information
-  fscanf(*file, "%d\n", &total_data);
-  // read labels and data
-  for (int i = 0; i < total_data; ++i) {
-    // read label
-    for (int j = 0; j < 10; ++j) {
-      fscanf(*file, "%f\n", &label[j]);
-    }
-    // read data
-    for (int j = 0; j < 28 * 28; ++j) {
-      fscanf(*file, "%f\n", &data[j]);
-    }
+  // Set the one hot index to 1
+  if (input >= 0 && input < 10) {
+    output[input] = 1.0f;
+  } else {
+    printf("Input out of range.\n");
   }
-  return total_data;
 }
-
-void train_mnist(NN *net, float alpha) {
-  float label[10];
-  float data[28 * 28];
-
-  FILE *file = fopen("train_data.txt", "r");
-  if (file == NULL) {
-    printf("Failed to open the file.\n");
+// Function to read MNIST data
+void read_mnist(char *images_file_path, char *labels_file_path,
+                float images[][784], int labels[]) {
+  // Open the files
+  FILE *images_file = fopen(images_file_path, "rb");
+  FILE *labels_file = fopen(labels_file_path, "rb");
+  if (images_file == NULL || labels_file == NULL) {
+    printf("Error opening file.\n");
     return;
   }
 
-  int total_data;
+  // Skip the headers
+  fseek(images_file, 16, SEEK_SET);
+  fseek(labels_file, 8, SEEK_SET);
 
-  for (int i = 0; i < 60000; ++i) {
-  total_data = read_arrays(&file, label, data);
-    train_step(net, data, label, alpha);
-    // save net on every 1000
-    if (i % 1000 == 0) {
-      printf("Trained %d\n", i);
-      save_nn(net, "net_mnist.net");
-      printf("Error %f\n", total_error(net, label));
+  // Loop over the images and labels
+  for (int i = 0; i < 60000; i++) {
+    // Read the image
+    for (int j = 0; j < 784; j++) {
+      unsigned char pixel;
+      fread(&pixel, sizeof(unsigned char), 1, images_file);
+      // Normalize the pixel values to [0, 1]
+      images[i][j] = pixel / 255.0;
     }
+
+    // Read the label
+    unsigned char label;
+    fread(&label, sizeof(unsigned char), 1, labels_file);
+    labels[i] = label;
   }
-  fclose(file);
+
+  // Close the files
+  fclose(images_file);
+  fclose(labels_file);
 }
 
-void test_mnist(NN *net) {
-  float label[10];
-  float data[28 * 28];
-  
-  FILE *file = fopen("test_data.txt", "r");
-  if (file == NULL) {
-    printf("Failed to open the file.\n");
-    return;
+void train_mnist(char *images_file_path, char *labels_file_path, NN *net) {
+  // Create buffers for the images and labels
+  float images[60000][784];
+  int labels[60000];
+  float output[10];
+
+  // Read the training data
+  read_mnist(images_file_path, labels_file_path, images, labels);
+
+  // Loop over the data and train the network
+  for (int i = 0; i < 60000; i++) {
+    one_hot_encode(labels[i], output);
+    train_step(net, images[i], output, 0.03);
   }
+}
 
-  int correct = 0;
-  int total_data;
+void test_mnist(char *images_file_path, char *labels_file_path, NN *net) {
+  // Create buffers for the images and labels
+  float images[10000][784];
+  int labels[10000];
 
-  for (int i = 0; i < 10000; ++i) {
-    total_data = read_arrays(&file, label, data);
-    predict(net, data);
-    float curr_max = -9999;
-    float temp;
-    int max_index = 0;
-    for (int i = 0; i < 10; ++i) {
-      temp = net->layers[net->num_layers - 1].neurons[i].activation;
-      if (temp > curr_max) {
-        max_index = i;
-        curr_max = temp;
-      }
+  // Read the testing data
+  read_mnist(images_file_path, labels_file_path, images, labels);
+
+  // Loop over the data and test the network
+  int correct_predictions = 0;
+  for (int i = 0; i < 10000; i++) {
+    // TODO: Define the predict function to predict the output of your network
+    // for a single example
+    predict(net, images[i]);
+    int prediction = max_output(net);
+    if (prediction == labels[i]) {
+      correct_predictions++;
     }
-
-    correct += label[max_index];
   }
-  fclose(file);
 
-  printf("THIS IS THE PERCENT CORRECT: %.5f\n", (float)correct / total_data);
+  // Print the accuracy
+  float accuracy = (float)correct_predictions / 10000.0;
+  printf("Test accuracy: %.2f%%\n", accuracy * 100);
 }
 
 int main() {
-  int layers[] = {28*28,128,10};
-  NN mnist_net = Neural_Network(3,layers ,"leakyRelu" ,"tanh");
+  int layers[] = {28 * 28, 128, 10};
+  NN mnist_net = Neural_Network(3, layers, "leakyRelu", "tanh");
   init_weights(&mnist_net);
-  //NN mnist_net;
-  //read_nn(&mnist_net, "net_mnist.net");
-   for (int epoch = 1; epoch < 50; ++epoch) {
-     train_mnist(&mnist_net, 0.03);
-     save_nn(&mnist_net, "net_mnist.net");
-     printf("epoch %d\n", epoch);
-
-   }
-  save_nn(&mnist_net, "net_mnist.net");
-  test_mnist(&mnist_net);
+  // NN mnist_net;
+  // read_nn(&mnist_net, "net_mnist.net");
+  int cap = 1;
+  for (int epoch = 0; epoch < 50; ++epoch) {
+    test_mnist("mnist/train-images-idx3-ubyte",
+               "mnist/train-labels-idx1-upbyte", &mnist_net);
+    save_nn(&mnist_net, "net_mnist.net");
+    printf("epoch %d\n", epoch);
+  }
+  test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx3-upbyte",
+             &mnist_net);
   return 0;
 }
