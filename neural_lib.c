@@ -1,4 +1,5 @@
 #include "neural_lib.h"
+#include <string.h>
 
 /*
 -------------------------------
@@ -26,6 +27,35 @@ float dcost(float x, float y) { return 2 * (x - y); }
 -------------------------------
 */
 
+void set_layer_activation(layer *l, char activation_name[]){
+  
+      l->activation_name = malloc(sizeof(char) * (strlen(activation_name)+1));
+      strcpy(l->activation_name, activation_name);
+      if (strcmp(activation_name, "leakyRelu") == 0) {
+        l->activation = leaky_relu;
+        l->dactivation = dleaky_relu;
+      }
+
+      else if (strcmp(activation_name, "relu") == 0) {
+        l->activation = relu;
+        l->dactivation = drelu;
+      }
+
+      else if (strcmp(activation_name, "sigmoid") == 0) {
+        l->activation = sigmoid;
+        l->dactivation = dsigmoid;
+      }
+
+      else if (strcmp(activation_name, "tanh") == 0) {
+        l->activation = tanhf;
+        l->dactivation = dtanh;
+      } else {
+        fprintf(stderr,
+                "activation_name: %s Please specify activation_name as either leakyRelu, "
+                "relu, sigmoid, or tanh",
+                activation_name);
+      }
+}
 NN Neural_Network(int num_layers, int *layers, char hidden[], char output[]) {
   NN ret;
   ret.num_layers = num_layers;
@@ -37,61 +67,12 @@ NN Neural_Network(int num_layers, int *layers, char hidden[], char output[]) {
     ret.layers[i].output = (i + 1 == num_layers);
     // set hidden layer activation
     if (!ret.layers[i].output) {
-      if (strcmp(hidden, "leakyRelu") == 0) {
-        ret.layers[i].activation = leaky_relu;
-        ret.layers[i].dactivation = dleaky_relu;
-      }
-
-      else if (strcmp(hidden, "relu") == 0) {
-        ret.layers[i].activation = relu;
-        ret.layers[i].dactivation = drelu;
-      }
-
-      else if (strcmp(hidden, "sigmoid") == 0) {
-        ret.layers[i].activation = sigmoid;
-        ret.layers[i].dactivation = dsigmoid;
-      }
-
-      else if (strcmp(hidden, "tanh") == 0) {
-        ret.layers[i].activation = tanhf;
-        ret.layers[i].dactivation = dtanh;
-      } else {
-        fprintf(stderr,
-                "hidden: %s Please specify hidden as either leakyRelu, "
-                "relu, sigmoid, or tanh",
-                hidden);
-      }
-
+      set_layer_activation(&ret.layers[i], hidden);
     }
     // output layer
     else {
-      ret.layers[i].activation = sigmoid;
-      ret.layers[i].dactivation = dsigmoid;
-      if (strcmp(hidden, "leakyRelu") == 0) {
-        ret.layers[i].activation = leaky_relu;
-        ret.layers[i].dactivation = dleaky_relu;
+      set_layer_activation(&ret.layers[i], output );
       }
-
-      else if (strcmp(hidden, "relu") == 0) {
-        ret.layers[i].activation = relu;
-        ret.layers[i].dactivation = drelu;
-      }
-
-      else if (strcmp(hidden, "sigmoid") == 0) {
-        ret.layers[i].activation = sigmoid;
-        ret.layers[i].dactivation = dsigmoid;
-      }
-
-      else if (strcmp(hidden, "tanh") == 0) {
-        ret.layers[i].activation = tanhf;
-        ret.layers[i].dactivation = dtanh;
-      } else {
-        fprintf(stderr,
-                "output: %s Please specify hidden as either leakyRelu, "
-                "relu, sigmoid, or tanh",
-                output);
-      }
-    }
 
     ret.layers[i].num_neurons = layers[i];
     ret.layers[i].neurons =
@@ -129,6 +110,7 @@ void free_NN(NN *net) {
       free(net->layers[i].neurons[j].dweights);
     }
     free(net->layers[i].neurons);
+    free(net->layers[i].activation_name);
   }
   free(net->layers);
 }
@@ -142,12 +124,12 @@ void init_weights(NN *net) {
   for (int i = 0; i < net->num_layers - 1; i++) {
     for (int j = 0; j < net->layers[i].num_neurons; j++) {
       for (int k = 0; k < net->layers[i].neurons[j].num_weights; k++) {
-        randfloat = ((float)rand() / (float)RAND_MAX) * 2 - 1;
-        net->layers[i].neurons[j].weights[k] = randfloat;
+        //randfloat = ((float)rand() / (float)RAND_MAX) * 2 - 1;
+        //net->layers[i].neurons[j].weights[k] = randfloat;
 
-        // net->layers[i].neurons[j].weights[k] =
-        //     sqrt(2.0 / net->layers[i].neurons[j].num_weights) *
-        //     ((float)rand() / (float)RAND_MAX - 0.5); // He initialization
+        net->layers[i].neurons[j].weights[k] =
+            sqrt(2.0 / net->layers[i].neurons[j].num_weights) *
+            ((float)rand() / (float)RAND_MAX - 0.5); // He initialization
       }
     }
   }
@@ -254,6 +236,19 @@ float total_error(NN *net, float *tv) {
   return error;
 }
 
+int max_output(NN* net) {
+    layer *l = &net->layers[net->num_layers-1];
+    int idx_max = 0;
+    float val_max = l->neurons[0].activation;
+    for(int i = 1; i < l->num_neurons; i++) {
+        if(l->neurons[i].activation > val_max) {
+            val_max = l->neurons[i].activation;
+            idx_max = i;
+        }
+    }
+    return idx_max;
+}
+
 void predict(NN *net, float *inputs) {
   set_inputs(net, inputs);
   forward_prop(net);
@@ -333,3 +328,60 @@ void printdNN(NN *net) {
 }
 
 void printOut(NN *net) { printLayer(&net->layers[net->num_layers - 1]); }
+
+/*
+-------------------------------
+            Saving and loading
+-------------------------------
+*/
+void save_nn(NN *network, const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    if (!file) {
+        fprintf(stderr, "Unable to open file for writing.\n");
+        return;
+    }
+
+    fwrite(&network->num_layers, sizeof(network->num_layers), 1, file);
+    for (int i = 0; i < network->num_layers; i++) {
+        int name_len = strlen(network->layers[i].activation_name) + 1; // +1 for null terminator
+        fwrite(&name_len, sizeof(name_len), 1, file);
+        fwrite(network->layers[i].activation_name, sizeof(char), name_len, file);
+
+        fwrite(&network->layers[i].num_neurons, sizeof(network->layers[i].num_neurons), 1, file);
+        for (int j = 0; j < network->layers[i].num_neurons; j++) {
+            fwrite(&network->layers[i].neurons[j].num_weights, sizeof(network->layers[i].neurons[j].num_weights), 1, file);
+            fwrite(network->layers[i].neurons[j].weights, sizeof(float), network->layers[i].neurons[j].num_weights, file);
+            fwrite(&network->layers[i].neurons[j].bias, sizeof(network->layers[i].neurons[j].bias), 1, file);
+        }
+    }
+    fclose(file);
+}
+
+void read_nn(NN *network, const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) {
+        fprintf(stderr, "Unable to open file for reading.\n");
+        return;
+    }
+
+    fread(&network->num_layers, sizeof(network->num_layers), 1, file);
+    network->layers = malloc(sizeof(layer) * network->num_layers);
+    for (int i = 0; i < network->num_layers; i++) {
+        int name_len;
+        fread(&name_len, sizeof(name_len), 1, file);
+        network->layers[i].activation_name = malloc(sizeof(char) * name_len);
+        fread(network->layers[i].activation_name, sizeof(char), name_len, file);
+
+        set_layer_activation(&network->layers[i], network->layers[i].activation_name);
+        fread(&network->layers[i].num_neurons, sizeof(network->layers[i].num_neurons), 1, file);
+        network->layers[i].neurons = malloc(sizeof(neuron) * network->layers[i].num_neurons);
+        for (int j = 0; j < network->layers[i].num_neurons; j++) {
+            fread(&network->layers[i].neurons[j].num_weights, sizeof(network->layers[i].neurons[j].num_weights), 1, file);
+            network->layers[i].neurons[j].weights = malloc(sizeof(float) * network->layers[i].neurons[j].num_weights);
+            network->layers[i].neurons[j].dweights = malloc(sizeof(float) * network->layers[i].neurons[j].num_weights);
+            fread(network->layers[i].neurons[j].weights, sizeof(float), network->layers[i].neurons[j].num_weights, file);
+            fread(&network->layers[i].neurons[j].bias, sizeof(network->layers[i].neurons[j].bias), 1, file);
+        }
+    }
+    fclose(file);
+}
