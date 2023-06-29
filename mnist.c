@@ -13,43 +13,41 @@ void one_hot_encode(int input, float output[10]) {
   }
 }
 // Function to read MNIST data
+
 void read_mnist(char *images_file_path, char *labels_file_path,
-                float images[][784], int labels[]) {
-  // Open the files
-  FILE *images_file = fopen(images_file_path, "rb");
-  FILE *labels_file = fopen(labels_file_path, "rb");
-  if (images_file == NULL) {
-    printf("Error opening image file.\n");
-    return;
-  }
+                float images[][784], int labels[]){
+    FILE *images_file = fopen(images_file_path, "rb");
+    FILE *labels_file = fopen(labels_file_path, "rb");
 
-  if (labels_file == NULL) {
-    printf("Error opening labels file.\n");
-    return;
-  }
-  // Skip the headers
-  fseek(images_file, 16, SEEK_SET);
-  fseek(labels_file, 8, SEEK_SET);
-
-  // Loop over the images and labels
-  for (int i = 0; i < 60000; i++) {
-    // Read the image
-    for (int j = 0; j < 784; j++) {
-      unsigned char pixel;
-      fread(&pixel, sizeof(unsigned char), 1, images_file);
-      // Normalize the pixel values to [0, 1]
-      images[i][j] = pixel / 255.0;
+    if (images_file == NULL || labels_file == NULL) {
+        printf("Error opening file.\n");
+        return;
     }
 
-    // Read the label
-    unsigned char label;
-    fread(&label, sizeof(unsigned char), 1, labels_file);
-    labels[i] = label;
-  }
+    // Read the headers
+    unsigned char buffer[4];
+    fseek(images_file, 4, SEEK_SET);
+    fread(buffer, sizeof(unsigned char), 4, images_file);
+    int num_items = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
 
-  // Close the files
-  fclose(images_file);
-  fclose(labels_file);
+    fseek(images_file, 16, SEEK_SET);
+    fseek(labels_file, 8, SEEK_SET);
+
+    // Loop over the images and labels
+    for (int i = 0; i < num_items; i++) {
+        for (int j = 0; j < 784; j++) {
+            unsigned char pixel;
+            fread(&pixel, sizeof(unsigned char), 1, images_file);
+            (*images)[i * 784 + j] = pixel / 255.0f;
+        }
+
+        unsigned char label;
+        fread(&label, sizeof(unsigned char), 1, labels_file);
+        labels[i] = label;
+    }
+
+    fclose(images_file);
+    fclose(labels_file);
 }
 
 void train_mnist(char *images_file_path, char *labels_file_path, NN *net) {
@@ -65,7 +63,7 @@ void train_mnist(char *images_file_path, char *labels_file_path, NN *net) {
   for (int i = 0; i < 60000; i++) {
     one_hot_encode(labels[i], output);
     train_step(net, images[i], output, 0.03);
-      if(i%10 ==0){
+      if(i%1000 ==0){
         printf("%d trained\n", i);
       }
   }
@@ -103,18 +101,20 @@ void test_mnist(char *images_file_path, char *labels_file_path, NN *net) {
 
 int main() {
   int layers[] = {28 * 28, 128, 10};
-  NN mnist_net = Neural_Network(3, layers, "leakyRelu", "tanh");
-  init_weights(&mnist_net);
-  // NN mnist_net;
-  // read_nn(&mnist_net, "net_mnist.net");
-  int cap = 1;
+  // NN mnist_net = Neural_Network(3, layers, "leakyRelu", "tanh");
+  // init_weights(&mnist_net);
+  NN mnist_net;
+  read_nn(&mnist_net, "net_mnist.net");
+  int cap = 0;
   for (int epoch = 0; epoch < cap; ++epoch) {
     train_mnist("mnist/train-images-idx3-ubyte",
                "mnist/train-labels-idx1-ubyte", &mnist_net);
     save_nn(&mnist_net, "net_mnist.net");
     printf("epoch %d\n", epoch);
+  test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte",
+             &mnist_net);
   }
-  test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx3-upbyte",
+  test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte",
              &mnist_net);
   return 0;
 }
