@@ -1,5 +1,4 @@
 #include "mnist.h"
-#include "draw.h"
 #include "neural_lib.h"
 
 void one_hot_encode(int input, float output[10]) {
@@ -97,13 +96,13 @@ int main() {
   // NN mnist_net;
   // read_nn(&mnist_net, "net_mnist.net");
   int cap = 1;
-  for (int epoch = 0; epoch < 50; ++epoch) {
-    test_mnist("mnist/train-images-idx3-ubyte",
-               "mnist/train-labels-idx1-upbyte", &mnist_net);
+  for (int epoch = 0; epoch < cap; ++epoch) {
+    train_mnist("./mnist/train-images-idx3-ubyte",
+               "./mnist/train-labels-idx1-upbyte", &mnist_net);
     save_nn(&mnist_net, "net_mnist.net");
     printf("epoch %d\n", epoch);
   }
-  test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx3-upbyte",
+  test_mnist("./mnist/t10k-images-idx3-ubyte", "./mnist/t10k-labels-idx3-upbyte",
              &mnist_net);
   return 0;
 }
