@@ -5,8 +5,9 @@
 #include "neural_lib.h"
 #include "mnist.h"
 
-void vizualize_picture(MNISTData *data);
+void vizualize_picture(MNISTData *data, char *caption);
 void vizualize_net(NN *net);
 void predict_picture(NN *net, MNISTData *data);
-void user_draw();
+MNISTData user_draw();
+void test_user(NN *net, MNISTData *m);
 #endif

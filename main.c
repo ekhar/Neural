@@ -8,10 +8,12 @@ int main(){
   // test_xor();
   //test_basic();
   NN net;
+  MNISTData m;
   // read_nn(&net,"saved_nets/xor.net");
   read_nn(&net,"saved_nets/91-86_mnist.net");
   //vizualize_net(&net);
-  user_draw();
+  m = user_draw();
+  test_user(&net,&m); 
   return 0;
 
 }

@@ -1,9 +1,10 @@
 #import "draw.h"
-#include <stdint.h>
+#include "mnist.h"
 #import "raylib.h"
 #import "rlgl.h"
+#include <stdint.h>
 
-void vizualize_picture(MNISTData *data) {
+void vizualize_picture(MNISTData *data, char *caption) {
   const int screenWidth = IMAGE_SIZE * SCALE_FACTOR;
   const int screenHeight = IMAGE_SIZE * SCALE_FACTOR + 200;
 
@@ -30,12 +31,11 @@ void vizualize_picture(MNISTData *data) {
                       SCALE_FACTOR, color);
       }
     }
-    const char *text = "Text at the bottom";
-    int textWidth = MeasureText(text, 20);
+    int textWidth = MeasureText(caption, 20);
     int xPos = (screenWidth - textWidth) / 2;
     int yPos = screenHeight - 50; // Adjust the vertical position as needed
 
-    DrawText(text, xPos, yPos, 20, BLACK);
+    DrawText(caption, xPos, yPos, 20, BLACK);
 
     EndDrawing();
     //----------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ void vizualize_net(NN *net) {
 #define RADIUS 10
 #define IMAGE_SIZE 28
 
-void user_draw() {
+MNISTData user_draw() {
   // Initialize the window
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Draw your number!");
 
@@ -136,9 +136,9 @@ void user_draw() {
   ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 
   MNISTData m;
-  for (int x=0; x<28; ++x){
-    for(int y=0; y<28; ++y){
-      m.image[x][y] = ((uint8_t *)img.data)[x * 28+ y];
+  for (int x = 0; x < 28; ++x) {
+    for (int y = 0; y < 28; ++y) {
+      m.image[x][y] = ((uint8_t *)img.data)[x * 28 + y];
     }
   }
 
@@ -146,6 +146,24 @@ void user_draw() {
   // Cleanup
   UnloadRenderTexture(drawing);
   CloseWindow();
-  
-  vizualize_picture(&m); 
+
+  return m;
+}
+
+void test_user(NN *net, MNISTData *m) {
+
+  float ins [28*28]; 
+  for(int r=0;r<28;++r){
+    for(int c=0;c<28;++c){
+      ins[r*28+c] = (float)m->image[r][c];
+    }
+  }
+  // predict what it was
+  predict(net, ins);
+  int prediction = max_output(net);
+  char *caption ;
+  sprintf(caption, "The prediction is %d", prediction);
+
+  // visualize person's drawing and say what the prediction was in the net
+  vizualize_picture(m, caption);
 }
