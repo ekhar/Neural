@@ -98,23 +98,24 @@ void test_mnist(char *images_file_path, char *labels_file_path, NN *net) {
   free(images);
   free(labels);
 }
-#define LAYERS 4
-int main() {
-  int layers[LAYERS] = {28 * 28, 180, 180, 10};
-  NN mnist_net = Neural_Network(LAYERS, layers, "leakyRelu", "sigmoid");
-  init_weights(&mnist_net);
-  // NN mnist_net;
-  // read_nn(&mnist_net, "net_mnist.net");
-  int cap = 500;
-  for (int epoch = 0; epoch < cap; ++epoch) {
-    train_mnist("mnist/train-images-idx3-ubyte",
-               "mnist/train-labels-idx1-ubyte", &mnist_net);
-    save_nn(&mnist_net, "net_mnist.net");
-    printf("epoch %d\n", epoch);
-  test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte",
-             &mnist_net);
-  }
-  test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte",
-             &mnist_net);
-  return 0;
-}
+//train an mnist NN
+// #define LAYERS 4
+// int main() {
+//   int layers[LAYERS] = {28 * 28, 180, 180, 10};
+//   NN mnist_net = Neural_Network(LAYERS, layers, "leakyRelu", "sigmoid");
+//   init_weights(&mnist_net);
+//   // NN mnist_net;
+//   // read_nn(&mnist_net, "net_mnist.net");
+//   int cap = 500;
+//   for (int epoch = 0; epoch < cap; ++epoch) {
+//     train_mnist("mnist/train-images-idx3-ubyte",
+//                "mnist/train-labels-idx1-ubyte", &mnist_net);
+//     save_nn(&mnist_net, "net_mnist.net");
+//     printf("epoch %d\n", epoch);
+//   test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte",
+//              &mnist_net);
+//   }
+//   test_mnist("mnist/t10k-images-idx3-ubyte", "mnist/t10k-labels-idx1-ubyte",
+//              &mnist_net);
+//   return 0;
+// }

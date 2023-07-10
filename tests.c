@@ -1,4 +1,5 @@
 #include "tests.h"
+#include "neural_lib.h"
 
 void test_init(NN *net) {
 
@@ -128,6 +129,7 @@ void test_xor() {
     printOut(&my_net);
   }
   printf("I AM ALL DONE");
+  save_nn(&my_net, "saved_nets/xor.net");
 
   // Cleanup
   free_NN(&my_net);
